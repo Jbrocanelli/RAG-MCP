@@ -4,7 +4,9 @@ from pathlib import Path
 from src.ingestion import load_documents, load_single_document, split_documents
 from src.vectorstore import get_or_create_vector_db
 from src.retriever import create_retrieval_chain
+from dotenv import load_dotenv
 
+load_dotenv()
 
 PERSIST_DIR = "data/vectorstore"
 
@@ -24,15 +26,20 @@ def ask(prompt: str) -> str:
 @mcp.tool()
 def add_document(file_path: str) -> str:
     global _chain
-    path = Path(file_path)
-    documents = load_documents(str(path)) if path.is_dir() else load_single_document(str(path))
-    chunks = split_documents(documents)
-    get_or_create_vector_db(persist_directory=PERSIST_DIR).add_documents(chunks)
-    _chain = None
-    return f"Ingested {len(chunks)} chunks"
+    try:
+        path = Path(file_path)
+        documents = load_documents(str(path)) if path.is_dir() else load_single_document(str(path))
+        chunks = split_documents(documents)
+        get_or_create_vector_db(persist_directory=PERSIST_DIR).add_documents(chunks)
+        _chain = None
+        return f"Ingested {len(chunks)} chunks"
+    except Exception as e:
+        return f"Error ingesting documents: {str(e)}"
 
 @mcp.resource("documents://list")
 def list_documents() -> str:
+    if not Path(PERSIST_DIR).exists():
+        return f"No documents available"
     documents = get_or_create_vector_db(persist_directory=PERSIST_DIR).get()
     files = set(metadata["file_name"] for metadata in documents["metadatas"])
     return "\n".join(files)
@@ -52,7 +59,7 @@ def get_chain():
     if _chain is None:
         documents = load_documents("data")
         split_docs = split_documents(documents)
-        vector_db = get_or_create_vector_db(split_docs, PERSIST_DIR)
+        vector_db = get_or_create_vector_db(PERSIST_DIR, documents=split_docs)
         _chain = create_retrieval_chain(vector_db)
     return _chain
 
