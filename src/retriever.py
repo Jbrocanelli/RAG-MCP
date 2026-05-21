@@ -2,11 +2,8 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
-from dotenv import load_dotenv
 
 def create_retrieval_chain(vectorstore, model_name: str = "llama-3.3-70b-versatile"):
-    load_dotenv()
-
     llm = ChatGroq(model_name=model_name, temperature=0.1)
 
     prompt = PromptTemplate(
