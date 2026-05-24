@@ -11,13 +11,10 @@ def get_or_create_vector_db(persist_directory: str, documents: list = None, mode
             _vector_db = Chroma(persist_directory=persist_directory, embedding_function=embedding)
       else:
             if not documents:
-                  raise ValueError("Documents is empty, cannot create vector db")
+                  raise ValueError("Documents are empty, cannot create vector db")
             _vector_db = Chroma.from_documents(
           documents=documents,
           embedding=embedding,
           persist_directory=persist_directory,
       )
       return _vector_db
-
-
-      
